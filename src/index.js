@@ -11,11 +11,10 @@ let gallery = new SimpleLightbox('.gallery a');
 
 const refs = {
   searchForm: document.querySelector('.search-form'),
-  loadMoreBtn: document.querySelector('.load-more'),
   divGallery: document.querySelector('.gallery'),
+  guard: document.querySelector('.js-guard'),
 };
 refs.searchForm.addEventListener('submit', onSubmitForm);
-refs.loadMoreBtn.addEventListener('click', onClickLoadMoreBtn);
 
 let page = 1;
 let urlSerchQuery = '';
@@ -35,9 +34,34 @@ function onSubmitForm(e) {
       Notify.success(`Hooray! We found ${totalHits} images.`);
     }
     if (totalHits > 40) {
-      showLoadMoreBtn();
+      observer.observe(refs.guard);
     }
     appendMarkupGallery(hits);
+  });
+}
+const options = {
+  root: null,
+  rootMargin: '400px',
+  // threshold: 1.0,
+};
+
+let observer = new IntersectionObserver(onLoad, options);
+
+function onLoad(entries, observer) {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      console.log('hello');
+      page += 1;
+      fetchImages(urlSerchQuery, page).then(({ hits }) => {
+        if (hits.length < 40) {
+          observer.unobserve(refs.guard);
+          Notify.info(
+            "We're sorry, but you've reached the end of search results."
+          );
+        }
+        appendMarkupGallery(hits);
+      });
+    }
   });
 }
 
@@ -90,33 +114,22 @@ function appendMarkupGallery(images) {
   refs.divGallery.insertAdjacentHTML('beforeend', markupGallery(images));
   gallery.refresh();
 }
-function showLoadMoreBtn() {
-  refs.loadMoreBtn.style.display = 'flex';
-}
-function hideLoadMoreBtn() {
-  refs.loadMoreBtn.style.display = 'none';
-}
-function onClickLoadMoreBtn() {
-  page += 1;
-  fetchImages(urlSerchQuery, page).then(({ hits }) => {
-    if (hits.length < 40) {
-      hideLoadMoreBtn();
-      Notify.info("We're sorry, but you've reached the end of search results.");
-    }
-    appendMarkupGallery(hits);
-    const { height: cardHeight } = document
-      .querySelector('.gallery')
-      .firstElementChild.getBoundingClientRect();
 
-    window.scrollBy({
-      top: cardHeight * 2,
-      behavior: 'smooth',
-    });
-  });
-}
+// function onClickLoadMoreBtn() {
+//
+//     const { height: cardHeight } = document
+//       .querySelector('.gallery')
+//       .firstElementChild.getBoundingClientRect();
+
+//     window.scrollBy({
+//       top: cardHeight * 2,
+//       behavior: 'smooth',
+//     });
+//   });
+// }
 
 function refreshData() {
   page = 1;
   refs.divGallery.innerHTML = '';
-  hideLoadMoreBtn();
+  // hideLoadMoreBtn();
 }
