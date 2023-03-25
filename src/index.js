@@ -42,7 +42,6 @@ function onSubmitForm(e) {
 const options = {
   root: null,
   rootMargin: '400px',
-  // threshold: 1.0,
 };
 
 let observer = new IntersectionObserver(onLoad, options);
